@@ -17,8 +17,8 @@ def extract_text_from_pdf(pdf_file):
     for page in pdf_reader.pages:
         try:
             page_text = page.extract_text()
-            # Clean and encode the text
-            page_text = page_text.encode('ascii', errors='ignore').decode('ascii')
+            # Use UTF-8 encoding instead of ASCII
+            page_text = page_text.encode('utf-8', errors='replace').decode('utf-8')
             text += page_text + "\n"
         except Exception as e:
             st.error(f"Error processing page: {str(e)}")
@@ -28,8 +28,8 @@ def extract_text_from_pdf(pdf_file):
 def analyze_with_claude(text):
     """Send text to Claude for analysis"""
     try:
-        # Clean the text before sending to Claude
-        cleaned_text = text.encode('ascii', errors='ignore').decode('ascii')
+        # Use UTF-8 encoding instead of ASCII
+        cleaned_text = text.encode('utf-8', errors='replace').decode('utf-8')
         message = anthropic.messages.create(
             model="claude-3-sonnet-20240229",
             max_tokens=4096,
