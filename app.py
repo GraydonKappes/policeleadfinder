@@ -15,24 +15,37 @@ def extract_text_from_pdf(pdf_file):
     pdf_reader = PdfReader(pdf_file)
     text = ""
     for page in pdf_reader.pages:
-        text += page.extract_text() + "\n"
+        try:
+            page_text = page.extract_text()
+            # Clean and encode the text
+            page_text = page_text.encode('ascii', errors='ignore').decode('ascii')
+            text += page_text + "\n"
+        except Exception as e:
+            st.error(f"Error processing page: {str(e)}")
+            continue
     return text
 
 def analyze_with_claude(text):
     """Send text to Claude for analysis"""
-    message = anthropic.messages.create(
-        model="claude-3-sonnet-20240229",
-        max_tokens=4096,
-        temperature=0,
-        system="You are a helpful assistant that analyzes documents and provides detailed summaries.",
-        messages=[
-            {
-                "role": "user",
-                "content": f"Please analyze this document and provide a detailed summary with key points:\n\n{text}"
-            }
-        ]
-    )
-    return message.content
+    try:
+        # Clean the text before sending to Claude
+        cleaned_text = text.encode('ascii', errors='ignore').decode('ascii')
+        message = anthropic.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=4096,
+            temperature=0,
+            system="You are a helpful assistant that analyzes documents and provides detailed summaries.",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Please analyze this document and provide a detailed summary with key points:\n\n{cleaned_text}"
+                }
+            ]
+        )
+        return message.content
+    except Exception as e:
+        st.error(f"Error analyzing document: {str(e)}")
+        return None
 
 # Streamlit UI
 st.title("PDF Analysis with Claude AI")
