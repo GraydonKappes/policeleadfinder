@@ -57,6 +57,24 @@ def analyze_with_claude(text):
 st.title("PDF Analysis with Claude AI")
 st.write("Upload a PDF file to get an AI-powered analysis")
 
+if st.button("Test Claude Connection"):
+    try:
+        test_message = anthropic.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=100,
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Please respond with: 'Connection successful!'"
+                }
+            ]
+        )
+        st.success(f"Claude says: {test_message.content}")
+    except Exception as e:
+        st.error(f"Failed to connect to Claude: {str(e)}")
+
+st.divider()  # Add a visual separator between the test button and file uploader
+
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file is not None:
