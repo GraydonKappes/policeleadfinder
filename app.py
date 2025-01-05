@@ -3,17 +3,21 @@ import streamlit as st
 from anthropic import Anthropic
 from PyPDF2 import PdfReader
 from dotenv import load_dotenv
+import logging
 
 # Load environment variables
 load_dotenv()
 
-api_key = os.getenv('ANTHROPIC_API_KEY')
+api_key = st.secrets["ANTHROPIC_API_KEY"]
 if not api_key:
-    st.error("No API key found. Please set the ANTHROPIC_API_KEY environment variable.")
+    st.error("No API key found in Streamlit secrets.")
     st.stop()
 
 # Initialize Anthropic client
 anthropic = Anthropic(api_key=api_key)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def extract_text_from_pdf(pdf_file):
     """Extract text content from uploaded PDF file"""
@@ -53,11 +57,7 @@ def analyze_with_claude(text):
         st.error(str(e))
         return None
 
-# Streamlit UI
-st.title("PDF Analysis with Claude AI")
-st.write("Upload a PDF file to get an AI-powered analysis")
-
-if st.button("Test Claude Connection"):
+def test_claude_connection():
     try:
         test_message = anthropic.messages.create(
             model="claude-3-sonnet-20240229",
@@ -65,13 +65,24 @@ if st.button("Test Claude Connection"):
             messages=[
                 {
                     "role": "user",
-                    "content": "Please respond with: 'Connection successful!'"
+                    "content": "Hi"  # Simpler test message
                 }
             ]
         )
-        st.success(f"Claude says: {test_message.content}")
+        return True, test_message.content
     except Exception as e:
-        st.error(f"Failed to connect to Claude: {str(e)}")
+        return False, str(e)
+
+# Streamlit UI
+st.title("PDF Analysis with Claude AI")
+st.write("Upload a PDF file to get an AI-powered analysis")
+
+if st.button("Test Claude Connection"):
+    success, message = test_claude_connection()
+    if success:
+        st.success(f"Claude says: {message}")
+    else:
+        st.error(f"Failed to connect to Claude: {message}")
 
 st.divider()  # Add a visual separator between the test button and file uploader
 
@@ -95,4 +106,5 @@ if uploaded_file is not None:
                     else:
                         st.error("Failed to get analysis from Claude.")
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}") 
+        st.error(f"An error occurred: {str(e)}")
+        logger.error(f"Error details: {str(e)}") 
