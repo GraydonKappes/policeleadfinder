@@ -155,117 +155,126 @@ if st.button("Test Claude Connection"):
 
 st.divider()  # Add a visual separator between the test button and file uploader
 
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+uploaded_files = st.file_uploader("Choose PDF files", type="pdf", accept_multiple_files=True)
 
-if uploaded_file is not None:
+if uploaded_files:
     try:
-        with st.spinner("Processing PDF..."):
-            text_content = extract_text_from_pdf(uploaded_file)
-            
-            if st.button("🔍 Analyze Crash Report", use_container_width=True):
-                if not text_content.strip():
-                    st.error("No text could be extracted from the PDF.")
-                    st.stop()
+        all_analyses = []
+        
+        for uploaded_file in uploaded_files:
+            with st.spinner(f"Processing {uploaded_file.name}..."):
+                text_content = extract_text_from_pdf(uploaded_file)
                 
-                with st.spinner("🔄 Analyzing crash report..."):
+                if not text_content.strip():
+                    st.error(f"No text could be extracted from {uploaded_file.name}")
+                    continue
+                
+                with st.spinner(f"🔄 Analyzing {uploaded_file.name}..."):
                     analysis = analyze_with_claude(text_content)
                     if analysis:
-                        tab1, tab2 = st.tabs(["Summary View", "Detailed Report"])
-                        
-                        with tab1:
-                            # Incident Summary Box
-                            st.markdown("""
-                                <style>
-                                .summary-box {
-                                    background-color: #f0f2f6;
-                                    border-radius: 10px;
-                                    padding: 20px;
-                                    margin: 10px 0;
-                                }
-                                .vehicle-box {
-                                    background-color: #ffffff;
-                                    border: 1px solid #e0e0e0;
-                                    border-radius: 10px;
-                                    padding: 20px;
-                                    margin: 10px 0;
-                                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                                }
-                                </style>
-                            """, unsafe_allow_html=True)
-
-                            # Extract summary and vehicle information
-                            sections = analysis.split("VEHICLE")
-                            summary = sections[0].replace("INCIDENT SUMMARY:", "").strip()
-                            # Clean up the summary text
-                            summary = summary.replace("[TextBlock(text='", "").replace("')", "").replace("\\n", " ").strip()
-
-                            # Display Summary
-                            st.subheader("📝 Incident Summary")
-                            st.markdown(f'<div class="summary-box">{summary}</div>', unsafe_allow_html=True)
-                            
-                            # Display Vehicle Information
-                            st.subheader("🚗 Vehicle Information")
-                            col1, col2 = st.columns(2)
-                            
-                            # Vehicle 1
-                            with col1:
-                                vehicle1_info = sections[1].split("VEHICLE 2:")[0]
-                                # Clean up vehicle 1 text
-                                v1_clean = (vehicle1_info
-                                            .replace("1:", "")
-                                            .replace("\\n", " ")
-                                            .replace("')", "")
-                                            .replace("type='text'", "")
-                                            .replace(", type='text']", "")
-                                            .strip())
-                                
-                                # Format the cleaned text
-                                formatted_v1 = (v1_clean
-                                               .replace("Make:", "<br><b>Make:</b>")
-                                               .replace("Model:", "<br><b>Model:</b>")
-                                               .replace("Year:", "<br><b>Year:</b>")
-                                               .replace("Damage:", "<br><b>Damage:</b>")
-                                               .replace("Injuries:", "<br><b>Injuries:</b>"))
-                                
-                                st.markdown(f'<div class="vehicle-box">{formatted_v1}</div>', unsafe_allow_html=True)
-                            
-                            # Vehicle 2
-                            with col2:
-                                if len(sections) > 2:
-                                    vehicle2_info = sections[2]
-                                    # Clean up vehicle 2 text
-                                    v2_clean = (vehicle2_info
-                                               .replace("2:", "")
-                                               .replace("\\n", " ")
-                                               .replace("')", "")
-                                               .replace("type='text'", "")
-                                               .replace(", type='text']", "")
-                                               .strip())
-                                    
-                                    # Format the cleaned text
-                                    formatted_v2 = (v2_clean
-                                                   .replace("Make:", "<br><b>Make:</b>")
-                                                   .replace("Model:", "<br><b>Model:</b>")
-                                                   .replace("Year:", "<br><b>Year:</b>")
-                                                   .replace("Damage:", "<br><b>Damage:</b>")
-                                                   .replace("Injuries:", "<br><b>Injuries:</b>"))
-                                    
-                                    st.markdown(f'<div class="vehicle-box">{formatted_v2}</div>', unsafe_allow_html=True)
-                            
-                            # Export button with some spacing
-                            st.markdown("<br>", unsafe_allow_html=True)
-                            st.download_button(
-                                label="📥 Export Analysis",
-                                data=analysis,
-                                file_name="crash_analysis.txt",
-                                mime="text/plain",
-                                use_container_width=True
-                            )
-                        
-                        with tab2:
-                            st.text_area("Raw PDF Content", text_content, height=300)
+                        all_analyses.append((uploaded_file.name, analysis))
                     else:
-                        st.error("Failed to analyze the crash report.")
+                        st.error(f"Failed to analyze {uploaded_file.name}")
+
+        if all_analyses:
+            # Add styling
+            st.markdown("""
+                <style>
+                .summary-box {
+                    background-color: #f0f2f6;
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 10px 0;
+                }
+                .vehicle-box {
+                    background-color: #ffffff;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 10px 0;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .report-separator {
+                    margin: 40px 0;
+                    border-top: 2px solid #e0e0e0;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+
+            # Process each analysis
+            for idx, (filename, analysis) in enumerate(all_analyses):
+                if idx > 0:
+                    st.markdown('<div class="report-separator"></div>', unsafe_allow_html=True)
+                
+                st.subheader(f"📄 Report: {filename}")
+                
+                # Extract summary and vehicle information
+                sections = analysis.split("VEHICLE")
+                summary = sections[0].replace("INCIDENT SUMMARY:", "").strip()
+                summary = summary.replace("[TextBlock(text='", "").replace("')", "").replace("\\n", " ").strip()
+
+                # Display Summary
+                st.subheader("📝 Incident Summary")
+                st.markdown(f'<div class="summary-box">{summary}</div>', unsafe_allow_html=True)
+                
+                # Display Vehicle Information
+                st.subheader("🚗 Vehicle Information")
+                col1, col2 = st.columns(2)
+                
+                # Vehicle 1
+                with col1:
+                    vehicle1_info = sections[1].split("VEHICLE 2:")[0]
+                    v1_clean = (vehicle1_info
+                                .replace("1:", "")
+                                .replace("\\n", " ")
+                                .replace("')", "")
+                                .replace("type='text'", "")
+                                .replace(", type='text']", "")
+                                .strip())
+                    
+                    formatted_v1 = (v1_clean
+                                   .replace("Make:", "<br><b>Make:</b>")
+                                   .replace("Model:", "<br><b>Model:</b>")
+                                   .replace("Year:", "<br><b>Year:</b>")
+                                   .replace("Damage:", "<br><b>Damage:</b>")
+                                   .replace("Injuries:", "<br><b>Injuries:</b>"))
+                    
+                    st.markdown(f'<div class="vehicle-box">{formatted_v1}</div>', unsafe_allow_html=True)
+                
+                # Vehicle 2
+                with col2:
+                    if len(sections) > 2:
+                        vehicle2_info = sections[2]
+                        v2_clean = (vehicle2_info
+                                   .replace("2:", "")
+                                   .replace("\\n", " ")
+                                   .replace("')", "")
+                                   .replace("type='text'", "")
+                                   .replace(", type='text']", "")
+                                   .strip())
+                        
+                        formatted_v2 = (v2_clean
+                                       .replace("Make:", "<br><b>Make:</b>")
+                                       .replace("Model:", "<br><b>Model:</b>")
+                                       .replace("Year:", "<br><b>Year:</b>")
+                                       .replace("Damage:", "<br><b>Damage:</b>")
+                                       .replace("Injuries:", "<br><b>Injuries:</b>"))
+                        
+                        st.markdown(f'<div class="vehicle-box">{formatted_v2}</div>', unsafe_allow_html=True)
+
+            # Export all analyses
+            st.markdown("<br>", unsafe_allow_html=True)
+            combined_analysis = "\n\n=== NEXT REPORT ===\n\n".join(
+                f"File: {filename}\n\n{analysis}" for filename, analysis in all_analyses
+            )
+            st.download_button(
+                label="📥 Export All Analyses",
+                data=combined_analysis,
+                file_name="crash_analyses.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+                    
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
         logger.error(f"Error details: {str(e)}")
