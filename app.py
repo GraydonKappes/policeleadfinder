@@ -58,6 +58,8 @@ def analyze_with_claude(text):
         INCIDENT SUMMARY:
         [2-3 sentence summary of the crash]
 
+        CRASH DATE: [MM/DD/YYYY format - date only, no time]
+
         VEHICLE 1:
         Owner Name: [full name]
         Owner Address: [complete address]
@@ -121,6 +123,13 @@ def parse_claude_response(response):
         # Parse incident summary
         summary = sections[1].replace("INCIDENT SUMMARY", "").strip()
         
+        # Parse crash date
+        try:
+            crash_date = sections[0].split("CRASH DATE:")[1].split("VEHICLE")[0].strip()
+            crash_date = clean_field_value(crash_date)
+        except:
+            crash_date = "Not specified"
+        
         # Parse vehicle information
         vehicles_section = sections[3].replace("VEHICLE INFORMATION", "").strip()
         vehicles = []
@@ -141,6 +150,7 @@ def parse_claude_response(response):
             
         return {
             'summary': summary,
+            'crash_date': crash_date,
             'vehicles': vehicles
         }
     except Exception as e:
@@ -193,8 +203,15 @@ def format_analysis_for_json(analysis_list):
         sections = analysis.split("VEHICLE")
         
         # Clean summary text
-        summary = sections[0].replace("INCIDENT SUMMARY:", "").strip()
+        summary = sections[0].split("CRASH DATE:")[0].replace("INCIDENT SUMMARY:", "").strip()
         summary = clean_field_value(summary)
+        
+        # Extract crash date
+        try:
+            crash_date = sections[0].split("CRASH DATE:")[1].split("VEHICLE")[0].strip()
+            crash_date = clean_field_value(crash_date)
+        except:
+            crash_date = "Not specified"
         
         # Process Vehicle 1
         vehicle1_info = sections[1].split("VEHICLE 2:")[0] if len(sections) > 1 else ""
@@ -253,6 +270,7 @@ def format_analysis_for_json(analysis_list):
         report_data = {
             "filename": filename,
             "incident_summary": summary,
+            "crash_date": crash_date,
             "vehicle1": vehicle1,
             "vehicle2": vehicle2 if vehicle2 else None
         }
@@ -326,14 +344,25 @@ if uploaded_files:
                 
                 st.subheader(f"📄 Report: {filename}")
                 
-                # Extract summary and vehicle information
+                # Extract summary and crash date
                 sections = analysis.split("VEHICLE")
-                summary = sections[0].replace("INCIDENT SUMMARY:", "").strip()
+                summary_section = sections[0]
+                summary = summary_section.split("CRASH DATE:")[0].replace("INCIDENT SUMMARY:", "").strip()
                 summary = summary.replace("[TextBlock(text='", "").replace("')", "").replace("\\n", " ").strip()
+
+                try:
+                    crash_date = summary_section.split("CRASH DATE:")[1].strip()
+                    crash_date = clean_display_text(crash_date)
+                except:
+                    crash_date = "Not specified"
 
                 # Display Summary
                 st.subheader("📝 Incident Summary")
                 st.markdown(f'<div class="summary-box">{summary}</div>', unsafe_allow_html=True)
+
+                # Display Crash Date
+                st.subheader("📅 Crash Date")
+                st.markdown(f'<div class="summary-box">{crash_date}</div>', unsafe_allow_html=True)
                 
                 # Display Vehicle Information
                 st.subheader("🚗 Vehicle Information")
