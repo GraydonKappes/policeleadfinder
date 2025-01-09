@@ -5,6 +5,8 @@ from PyPDF2 import PdfReader
 from dotenv import load_dotenv
 import logging
 import json
+from db_operations import save_crash_report
+from database import SessionLocal
 
 # Load environment variables
 load_dotenv()
@@ -202,9 +204,17 @@ def format_analysis_for_json(analysis_list):
     for filename, analysis in analysis_list:
         sections = analysis.split("VEHICLE")
         
-        # Clean summary text
+        # Clean summary text - Enhanced cleaning
         summary = sections[0].split("CRASH DATE:")[0].replace("INCIDENT SUMMARY:", "").strip()
-        summary = clean_field_value(summary)
+        summary = (summary
+                  .replace("[TextBlock(text='", "")
+                  .replace("', type='text]", "")
+                  .replace(", type='text]", "")
+                  .replace("type='text'", "")
+                  .replace("')", "")
+                  .replace(")]", "")
+                  .replace("\\n", " ")
+                  .strip())
         
         # Extract crash date
         try:
@@ -244,7 +254,7 @@ def format_analysis_for_json(analysis_list):
                         vehicle1[field_key] = cleaned_value
                 else:
                     vehicle1[field_key] = cleaned_value
-        
+
         # Process Vehicle 2 using the same logic
         vehicle2 = {}
         if len(sections) > 2:
@@ -410,8 +420,20 @@ if uploaded_files:
             # Export all analyses as JSON
             st.markdown("<br>", unsafe_allow_html=True)
             json_data = format_analysis_for_json(all_analyses)
-            json_string = json.dumps(json_data, indent=2)  # Added indent=2 for pretty printing
-            
+            json_string = json.dumps(json_data, indent=2)
+
+            # Save to database
+            db = SessionLocal()
+            try:
+                for report in json_data:
+                    save_crash_report(db, report)
+                st.success("✅ Successfully saved reports to database!")
+            except Exception as e:
+                st.error(f"Failed to save to database: {str(e)}")
+            finally:
+                db.close()
+
+            # Add download button
             st.download_button(
                 label="📥 Export All Analyses (JSON)",
                 data=json_string,
