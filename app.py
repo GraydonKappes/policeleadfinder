@@ -4,6 +4,7 @@ from anthropic import Anthropic
 from PyPDF2 import PdfReader
 from dotenv import load_dotenv
 import logging
+import json
 
 # Load environment variables
 load_dotenv()
@@ -58,6 +59,8 @@ def analyze_with_claude(text):
         [2-3 sentence summary of the crash]
 
         VEHICLE 1:
+        Owner Name: [full name]
+        Owner Address: [complete address]
         Make: [make]
         Model: [model]
         Year: [year]
@@ -65,6 +68,8 @@ def analyze_with_claude(text):
         Injuries: [injury status]
 
         VEHICLE 2:
+        Owner Name: [full name]
+        Owner Address: [complete address]
         Make: [make]
         Model: [model]
         Year: [year]
@@ -141,6 +146,119 @@ def parse_claude_response(response):
     except Exception as e:
         logger.error(f"Error parsing Claude response: {str(e)}")
         return None
+
+def clean_field_value(value):
+    """Clean any field value by removing common artifacts"""
+    if not isinstance(value, str):
+        return value
+        
+    cleaned = value
+    artifacts = [
+        "', type='text]",
+        ", type='text]",
+        "type='text'",
+        "type=text",
+        "Owner",  # Remove standalone "Owner"
+        "'",  # Add single quote by itself
+        ",",  # Add comma by itself
+        "[TextBlock(text='",
+        "')",
+        ")]",
+        "\\n"
+    ]
+    
+    for artifact in artifacts:
+        cleaned = cleaned.replace(artifact, "")
+    
+    return cleaned.strip()
+
+def clean_display_text(text):
+    """Clean text for display purposes"""
+    return (text
+            .replace("', type='text]", "")
+            .replace(", type='text]", "")
+            .replace("[TextBlock(text='", "")
+            .replace("type='text'", "")
+            .replace("'", "")  # Add single quote removal
+            .replace(",", "")  # Add comma removal
+            .replace("')", "")
+            .replace(")]", "")
+            .replace("\\n", " ")
+            .strip())
+
+def format_analysis_for_json(analysis_list):
+    """Convert analyses into structured JSON format"""
+    formatted_data = []
+    for filename, analysis in analysis_list:
+        sections = analysis.split("VEHICLE")
+        
+        # Clean summary text
+        summary = sections[0].replace("INCIDENT SUMMARY:", "").strip()
+        summary = clean_field_value(summary)
+        
+        # Process Vehicle 1
+        vehicle1_info = sections[1].split("VEHICLE 2:")[0] if len(sections) > 1 else ""
+        vehicle1 = {}
+        
+        # Extract and clean each field for Vehicle 1
+        field_mappings = {
+            "Make:": "make",
+            "Model:": "model",
+            "Year:": "year",
+            "Damage:": "damage",
+            "Injuries:": "injuries",
+            "Owner Name:": "owner_name",
+            "Owner Address:": "owner_address"
+        }
+        
+        for field_label, field_key in field_mappings.items():
+            if field_label in vehicle1_info:
+                next_field = next((f for f in field_mappings.keys() if f in vehicle1_info.split(field_label)[1]), None)
+                value = vehicle1_info.split(field_label)[1].split(next_field)[0].strip() if next_field else vehicle1_info.split(field_label)[1].strip()
+                
+                # Clean the value
+                cleaned_value = clean_field_value(value)
+                
+                # Convert year to integer if possible
+                if field_key == "year":
+                    try:
+                        vehicle1[field_key] = int(cleaned_value)
+                    except ValueError:
+                        vehicle1[field_key] = cleaned_value
+                else:
+                    vehicle1[field_key] = cleaned_value
+        
+        # Process Vehicle 2 using the same logic
+        vehicle2 = {}
+        if len(sections) > 2:
+            vehicle2_info = sections[2]
+            
+            for field_label, field_key in field_mappings.items():
+                if field_label in vehicle2_info:
+                    next_field = next((f for f in field_mappings.keys() if f in vehicle2_info.split(field_label)[1]), None)
+                    value = vehicle2_info.split(field_label)[1].split(next_field)[0].strip() if next_field else vehicle2_info.split(field_label)[1].strip()
+                    
+                    # Clean the value
+                    cleaned_value = clean_field_value(value)
+                    
+                    # Convert year to integer if possible
+                    if field_key == "year":
+                        try:
+                            vehicle2[field_key] = int(cleaned_value)
+                        except ValueError:
+                            vehicle2[field_key] = cleaned_value
+                    else:
+                        vehicle2[field_key] = cleaned_value
+        
+        report_data = {
+            "filename": filename,
+            "incident_summary": summary,
+            "vehicle1": vehicle1,
+            "vehicle2": vehicle2 if vehicle2 else None
+        }
+        formatted_data.append(report_data)
+    
+    return formatted_data
 
 # Streamlit UI
 st.title("PDF Analysis with Claude AI")
@@ -233,6 +351,8 @@ if uploaded_files:
                                 .strip())
                     
                     formatted_v1 = (v1_clean
+                                   .replace("Owner Name:", "<br><b>Owner Name:</b>")
+                                   .replace("Owner Address:", "<br><b>Owner Address:</b>")
                                    .replace("Make:", "<br><b>Make:</b>")
                                    .replace("Model:", "<br><b>Model:</b>")
                                    .replace("Year:", "<br><b>Year:</b>")
@@ -245,15 +365,11 @@ if uploaded_files:
                 with col2:
                     if len(sections) > 2:
                         vehicle2_info = sections[2]
-                        v2_clean = (vehicle2_info
-                                   .replace("2:", "")
-                                   .replace("\\n", " ")
-                                   .replace("')", "")
-                                   .replace("type='text'", "")
-                                   .replace(", type='text']", "")
-                                   .strip())
+                        v2_clean = clean_display_text(vehicle2_info.replace("2:", ""))
                         
                         formatted_v2 = (v2_clean
+                                       .replace("Owner Name:", "<br><b>Owner Name:</b>")
+                                       .replace("Owner Address:", "<br><b>Owner Address:</b>")
                                        .replace("Make:", "<br><b>Make:</b>")
                                        .replace("Model:", "<br><b>Model:</b>")
                                        .replace("Year:", "<br><b>Year:</b>")
@@ -262,16 +378,16 @@ if uploaded_files:
                         
                         st.markdown(f'<div class="vehicle-box">{formatted_v2}</div>', unsafe_allow_html=True)
 
-            # Export all analyses
+            # Export all analyses as JSON
             st.markdown("<br>", unsafe_allow_html=True)
-            combined_analysis = "\n\n=== NEXT REPORT ===\n\n".join(
-                f"File: {filename}\n\n{analysis}" for filename, analysis in all_analyses
-            )
+            json_data = format_analysis_for_json(all_analyses)
+            json_string = json.dumps(json_data, indent=2)  # Added indent=2 for pretty printing
+            
             st.download_button(
-                label="📥 Export All Analyses",
-                data=combined_analysis,
-                file_name="crash_analyses.txt",
-                mime="text/plain",
+                label="📥 Export All Analyses (JSON)",
+                data=json_string,
+                file_name="crash_analyses.json",
+                mime="application/json",
                 use_container_width=True
             )
                     
