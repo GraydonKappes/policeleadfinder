@@ -7,6 +7,10 @@ st.title("Case Management")
 # Initialize database connection
 db = SessionLocal()
 
+def format_status_display(status):
+    """Convert enum value to display format (e.g., IN_PROGRESS -> In Progress)"""
+    return status.value.replace("_", " ")
+
 try:
     # Get all cases
     cases = db.query(Case).join(Vehicle).order_by(Case.created_at.desc()).all()
@@ -15,7 +19,7 @@ try:
         st.info("No active cases found.")
     else:
         for case in cases:
-            with st.expander(f"{case.vehicle.make} {case.vehicle.model} - {case.status.value}"):
+            with st.expander(f"{case.vehicle.make} {case.vehicle.model} - {format_status_display(case.status)}"):
                 col1, col2 = st.columns([3, 1])
                 
                 with col1:
@@ -33,7 +37,7 @@ try:
                         options=[status for status in CaseStatus],
                         key=f"status_{case.id}",
                         index=[status for status in CaseStatus].index(case.status),
-                        format_func=lambda x: x.value
+                        format_func=lambda x: format_status_display(x)
                     )
                     
                     if new_status != case.status:

@@ -33,7 +33,7 @@ class CasePriority(PyEnum):
 
 class CaseStatus(PyEnum):
     NEW = "NEW"
-    IN_PROGRESS = "IN PROGRESS"
+    IN_PROGRESS = "IN_PROGRESS"
     CLOSED = "CLOSED"
     LOST = "LOST"
 
