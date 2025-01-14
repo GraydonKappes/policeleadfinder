@@ -42,7 +42,6 @@ if st.button("Apply Filters"):
         for crash in crashes:
             with st.expander(f"Crash on {crash.crash_date} - {crash.filename}"):
                 st.write("**Summary:**", crash.incident_summary)
-                st.write("**Towing Company:**", crash.towing_company or "Not specified")
                 st.write("**Vehicles:**")
                 for vehicle in crash.vehicles:
                     st.write(f"""
