@@ -10,9 +10,16 @@ st.title("View Crash Reports")
 st.subheader("Filter by Crash Date")
 col1, col2 = st.columns(2)
 with col1:
-    start_date = st.date_input("Start Date", min_value=date(2000,1,1))
+    start_date = st.date_input(
+        "Start Date", 
+        min_value=date(2000,1,1),
+        format="MM/DD/YYYY"
+    )
 with col2:
-    end_date = st.date_input("End Date")
+    end_date = st.date_input(
+        "End Date",
+        format="MM/DD/YYYY"
+    )
 
 # Year range filter
 st.subheader("Filter by Vehicle Year")
@@ -35,6 +42,7 @@ if st.button("Apply Filters"):
         for crash in crashes:
             with st.expander(f"Crash on {crash.crash_date} - {crash.filename}"):
                 st.write("**Summary:**", crash.incident_summary)
+                st.write("**Towing Company:**", crash.towing_company or "Not specified")
                 st.write("**Vehicles:**")
                 for vehicle in crash.vehicles:
                     st.write(f"""
@@ -45,6 +53,8 @@ if st.button("Apply Filters"):
                     - Year: {vehicle.year}
                     - Damage: {vehicle.damage}
                     - Injuries: {vehicle.injuries}
+                    - Insurance Company: {vehicle.insurance_company or "Not specified"}
+                    - Insurance Policy #: {vehicle.insurance_policy_number or "Not specified"}
                     """)
     finally:
         db.close() 

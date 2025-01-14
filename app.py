@@ -62,6 +62,8 @@ def analyze_with_claude(text):
 
         CRASH DATE: [MM/DD/YYYY format - date only, no time]
 
+        TOWING COMPANY: [name of towing company]
+
         VEHICLE 1:
         Owner Name: [full name]
         Owner Address: [complete address]
@@ -70,6 +72,8 @@ def analyze_with_claude(text):
         Year: [year]
         Damage: [damage details]
         Injuries: [injury status]
+        Insurance Company: [insurance company name]
+        Insurance Policy #: [policy number]
 
         VEHICLE 2:
         Owner Name: [full name]
@@ -79,6 +83,8 @@ def analyze_with_claude(text):
         Year: [year]
         Damage: [damage details]
         Injuries: [injury status]
+        Insurance Company: [insurance company name]
+        Insurance Policy #: [policy number]
 
         If any information is missing, write "Not specified"."""
         

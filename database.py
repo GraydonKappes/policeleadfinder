@@ -36,6 +36,7 @@ class CrashReport(Base):
     filename = Column(String(255), nullable=False)
     incident_summary = Column(Text, nullable=False)
     crash_date = Column(Date, nullable=False)
+    towing_company = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     processed_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     
@@ -53,7 +54,9 @@ class Vehicle(Base):
     model = Column(String(100), nullable=False)
     year = Column(Integer, nullable=True)
     damage = Column(Text, nullable=False)
-    injuries = Column(injury_status_enum, nullable=False)  # Use the ENUM type
+    injuries = Column(injury_status_enum, nullable=False)
+    insurance_company = Column(String(255), nullable=True)
+    insurance_policy_number = Column(String(100), nullable=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     
     crash_report = relationship("CrashReport", back_populates="vehicles")

@@ -17,7 +17,8 @@ def save_crash_report(db: Session, report_data: dict):
     crash_report = CrashReport(
         filename=report_data["filename"],
         incident_summary=report_data["incident_summary"],
-        crash_date=datetime.strptime(report_data["crash_date"], "%m/%d/%Y").date()
+        crash_date=datetime.strptime(report_data["crash_date"], "%m/%d/%Y").date(),
+        towing_company=report_data.get("towing_company", None)
     )
     
     db.add(crash_report)
@@ -41,10 +42,11 @@ def save_crash_report(db: Session, report_data: dict):
                 model=vehicle_data["model"],
                 year=vehicle_data["year"],
                 damage=vehicle_data["damage"],
-                injuries=injury_text
+                injuries=injury_text,
+                insurance_company=vehicle_data.get("insurance_company"),
+                insurance_policy_number=vehicle_data.get("insurance_policy_number")
             )
             db.add(vehicle)
-    
     db.commit()
     return crash_report
 
