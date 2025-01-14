@@ -85,3 +85,9 @@ class Vehicle(Base):
     
     crash_report = relationship("CrashReport", back_populates="vehicles")
     case = relationship("Case", back_populates="vehicle", uselist=False)
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+# Call it immediately when the module is imported
+init_db()
