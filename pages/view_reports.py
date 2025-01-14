@@ -1,8 +1,10 @@
 import streamlit as st
 from database import SessionLocal
-from db_operations import get_filtered_crashes
+from db_operations import get_filtered_crashes, create_case_for_vehicle
 from datetime import datetime, date, timedelta
 from app import reset_session_state
+from database import Vehicle, Case
+from sqlalchemy.orm import Session
 
 st.title("View Crash Reports")
 
@@ -66,17 +68,28 @@ try:
                 st.write("**Summary:**", crash.incident_summary)
                 st.write("**Vehicles:**")
                 for vehicle in crash.vehicles:
-                    st.write(f"""
-                    Vehicle {vehicle.vehicle_number}:
-                    - Owner: {vehicle.owner_name}
-                    - Make: {vehicle.make}
-                    - Model: {vehicle.model}
-                    - Year: {vehicle.year}
-                    - Damage: {vehicle.damage}
-                    - Injuries: {vehicle.injuries}
-                    - Insurance Company: {vehicle.insurance_company or "Not specified"}
-                    - Insurance Policy #: {vehicle.insurance_policy_number or "Not specified"}
-                    - Towing Company: {vehicle.towing_company or "Not specified"}
-                    """)
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"""
+                        Vehicle {vehicle.vehicle_number}:
+                        - Owner: {vehicle.owner_name}
+                        - Make: {vehicle.make}
+                        - Model: {vehicle.model}
+                        - Year: {vehicle.year}
+                        - Damage: {vehicle.damage}
+                        - Injuries: {vehicle.injuries}
+                        """)
+                    with col2:
+                        if not hasattr(vehicle, 'case') or vehicle.case is None:
+                            if st.button("Create Case", key=f"create_case_{vehicle.id}"):
+                                try:
+                                    case = create_case_for_vehicle(db, vehicle.id)
+                                    st.success(f"Case created with {case.priority.value} priority!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error creating case: {str(e)}")
+                        else:
+                            st.info(f"Case exists - {vehicle.case.status.value}")
+                            st.write(f"Priority: {vehicle.case.priority.value}")
 finally:
     db.close() 

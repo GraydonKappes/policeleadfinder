@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, extract
 from datetime import datetime
-from database import CrashReport, Vehicle, INJURY_STATUSES
+from database import CrashReport, Vehicle, INJURY_STATUSES, CasePriority, Case, CaseStatus
 
 def save_crash_report(db: Session, report_data: dict):
     # Check if report already exists
@@ -69,3 +69,47 @@ def get_filtered_crashes(db: Session, year_range=None, date_range=None):
     query = query.order_by(CrashReport.crash_date.desc())
     
     return query.all() 
+
+def calculate_case_priority(vehicle_damage: str, vehicle_year: int) -> CasePriority:
+    current_year = datetime.now().year
+    
+    # Check if vehicle is less than 10 years old
+    is_recent = (vehicle_year and (current_year - vehicle_year) <= 10)
+    
+    # Check for severe damage keywords
+    severe_keywords = ['severe', 'major', 'totaled', 'extensive', 'heavy', 'significant']
+    has_severe_damage = any(keyword in vehicle_damage.lower() for keyword in severe_keywords)
+    
+    if is_recent and has_severe_damage:
+        return CasePriority.HIGH
+    elif is_recent or has_severe_damage:
+        return CasePriority.MEDIUM
+    else:
+        return CasePriority.LOW 
+
+def create_case_for_vehicle(db: Session, vehicle_id: int) -> Case:
+    # Check if case already exists
+    existing_case = db.query(Case).filter(Case.vehicle_id == vehicle_id).first()
+    if existing_case:
+        return existing_case
+    
+    # Get vehicle details
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise ValueError("Vehicle not found")
+    
+    # Calculate priority
+    priority = calculate_case_priority(vehicle.damage, vehicle.year)
+    
+    # Create new case
+    case = Case(
+        vehicle_id=vehicle_id,
+        status=CaseStatus.NEW,
+        priority=priority,
+        notes=f"Initial case created for {vehicle.make} {vehicle.model} ({vehicle.year})"
+    )
+    
+    db.add(case)
+    db.commit()
+    db.refresh(case)
+    return case 

@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from sqlalchemy.dialects.postgresql import ENUM
+from enum import Enum as PyEnum
 
 load_dotenv()
 
@@ -28,6 +29,31 @@ injury_status_enum = ENUM(
     *INJURY_STATUSES,
     name='injury_status'
 )
+
+class CasePriority(PyEnum):
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+    URGENT = "Urgent"
+
+class CaseStatus(PyEnum):
+    NEW = "New"
+    IN_PROGRESS = "In Progress"
+    CLOSED = "Closed"
+    LOST = "Lost"
+
+class Case(Base):
+    __tablename__ = "cases"
+    
+    id = Column(Integer, primary_key=True)
+    vehicle_id = Column(Integer, ForeignKey('vehicles.id', ondelete='CASCADE'))
+    status = Column(Enum(CaseStatus), default=CaseStatus.NEW)
+    priority = Column(Enum(CasePriority))
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    notes = Column(Text, nullable=True)
+    
+    vehicle = relationship("Vehicle", back_populates="case")
 
 class CrashReport(Base):
     __tablename__ = "crash_reports"
@@ -60,3 +86,4 @@ class Vehicle(Base):
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     
     crash_report = relationship("CrashReport", back_populates="vehicles")
+    case = relationship("Case", back_populates="vehicle", uselist=False)
