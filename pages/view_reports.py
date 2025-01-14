@@ -55,6 +55,7 @@ if st.button("Apply Filters"):
                     - Injuries: {vehicle.injuries}
                     - Insurance Company: {vehicle.insurance_company or "Not specified"}
                     - Insurance Policy #: {vehicle.insurance_policy_number or "Not specified"}
+                    - Towing Company: {vehicle.towing_company or "Not specified"}
                     """)
     finally:
         db.close() 

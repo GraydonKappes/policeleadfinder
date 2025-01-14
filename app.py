@@ -233,7 +233,7 @@ def format_analysis_for_json(analysis_list):
         vehicle1_info = sections[1].split("VEHICLE 2:")[0] if len(sections) > 1 else ""
         vehicle1 = {}
         
-        # Extract and clean each field for Vehicle 1
+        # Updated field mappings to include new fields
         field_mappings = {
             "Make:": "make",
             "Model:": "model",
@@ -241,21 +241,21 @@ def format_analysis_for_json(analysis_list):
             "Damage:": "damage",
             "Injuries:": "injuries",
             "Owner Name:": "owner_name",
-            "Owner Address:": "owner_address"
+            "Owner Address:": "owner_address",
+            "Insurance Company:": "insurance_company",
+            "Insurance Policy #:": "insurance_policy_number",
+            "Towing Company:": "towing_company"
         }
         
+        # Process fields for Vehicle 1
         for field_label, field_key in field_mappings.items():
             if field_label in vehicle1_info:
                 next_field = next((f for f in field_mappings.keys() if f in vehicle1_info.split(field_label)[1]), None)
                 value = vehicle1_info.split(field_label)[1].split(next_field)[0].strip() if next_field else vehicle1_info.split(field_label)[1].strip()
-                
-                # Clean the value
                 cleaned_value = clean_field_value(value)
                 
-                # Convert year to integer if possible
                 if field_key == "year":
                     try:
-                        cleaned_value = clean_field_value(value)
                         if cleaned_value.lower() == "not specified":
                             vehicle1[field_key] = None
                         else:
@@ -263,25 +263,20 @@ def format_analysis_for_json(analysis_list):
                     except (ValueError, AttributeError):
                         vehicle1[field_key] = None
                 else:
-                    vehicle1[field_key] = cleaned_value
+                    vehicle1[field_key] = cleaned_value if cleaned_value else "Not specified"
 
         # Process Vehicle 2 using the same logic
         vehicle2 = {}
         if len(sections) > 2:
             vehicle2_info = sections[2]
-            
             for field_label, field_key in field_mappings.items():
                 if field_label in vehicle2_info:
                     next_field = next((f for f in field_mappings.keys() if f in vehicle2_info.split(field_label)[1]), None)
                     value = vehicle2_info.split(field_label)[1].split(next_field)[0].strip() if next_field else vehicle2_info.split(field_label)[1].strip()
-                    
-                    # Clean the value
                     cleaned_value = clean_field_value(value)
                     
-                    # Convert year to integer if possible
                     if field_key == "year":
                         try:
-                            cleaned_value = clean_field_value(value)
                             if cleaned_value.lower() == "not specified":
                                 vehicle2[field_key] = None
                             else:
@@ -289,8 +284,8 @@ def format_analysis_for_json(analysis_list):
                         except (ValueError, AttributeError):
                             vehicle2[field_key] = None
                     else:
-                        vehicle2[field_key] = cleaned_value
-        
+                        vehicle2[field_key] = cleaned_value if cleaned_value else "Not specified"
+
         report_data = {
             "filename": filename,
             "incident_summary": summary,
@@ -439,7 +434,10 @@ if uploaded_files:
                                        .replace("Model:", "<br><b>Model:</b>")
                                        .replace("Year:", "<br><b>Year:</b>")
                                        .replace("Damage:", "<br><b>Damage:</b>")
-                                       .replace("Injuries:", "<br><b>Injuries:</b>"))
+                                       .replace("Injuries:", "<br><b>Injuries:</b>")
+                                       .replace("Insurance Company:", "<br><b>Insurance Company:</b>")
+                                       .replace("Insurance Policy #:", "<br><b>Insurance Policy #:</b>")
+                                       .replace("Towing Company:", "<br><b>Towing Company:</b>"))
                         
                         st.markdown(f'<div class="vehicle-box">{formatted_v2}</div>', unsafe_allow_html=True)
 
