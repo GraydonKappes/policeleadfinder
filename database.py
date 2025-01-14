@@ -36,7 +36,6 @@ class CrashReport(Base):
     filename = Column(String(255), nullable=False)
     incident_summary = Column(Text, nullable=False)
     crash_date = Column(Date, nullable=False)
-    towing_company = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     processed_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     

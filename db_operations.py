@@ -17,8 +17,7 @@ def save_crash_report(db: Session, report_data: dict):
     crash_report = CrashReport(
         filename=report_data["filename"],
         incident_summary=report_data["incident_summary"],
-        crash_date=datetime.strptime(report_data["crash_date"], "%m/%d/%Y").date(),
-        towing_company=report_data.get("towing_company", None)
+        crash_date=datetime.strptime(report_data["crash_date"], "%m/%d/%Y").date()
     )
     
     db.add(crash_report)
