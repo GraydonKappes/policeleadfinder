@@ -249,9 +249,13 @@ def format_analysis_for_json(analysis_list):
                 # Convert year to integer if possible
                 if field_key == "year":
                     try:
-                        vehicle1[field_key] = int(cleaned_value)
-                    except ValueError:
-                        vehicle1[field_key] = cleaned_value
+                        cleaned_value = clean_field_value(value)
+                        if cleaned_value.lower() == "not specified":
+                            vehicle1[field_key] = None
+                        else:
+                            vehicle1[field_key] = int(cleaned_value)
+                    except (ValueError, AttributeError):
+                        vehicle1[field_key] = None
                 else:
                     vehicle1[field_key] = cleaned_value
 
@@ -271,9 +275,13 @@ def format_analysis_for_json(analysis_list):
                     # Convert year to integer if possible
                     if field_key == "year":
                         try:
-                            vehicle2[field_key] = int(cleaned_value)
-                        except ValueError:
-                            vehicle2[field_key] = cleaned_value
+                            cleaned_value = clean_field_value(value)
+                            if cleaned_value.lower() == "not specified":
+                                vehicle2[field_key] = None
+                            else:
+                                vehicle2[field_key] = int(cleaned_value)
+                        except (ValueError, AttributeError):
+                            vehicle2[field_key] = None
                     else:
                         vehicle2[field_key] = cleaned_value
         

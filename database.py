@@ -51,7 +51,7 @@ class Vehicle(Base):
     owner_address = Column(Text, nullable=False)
     make = Column(String(100), nullable=False)
     model = Column(String(100), nullable=False)
-    year = Column(Integer)
+    year = Column(Integer, nullable=True)
     damage = Column(Text, nullable=False)
     injuries = Column(injury_status_enum, nullable=False)  # Use the ENUM type
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
