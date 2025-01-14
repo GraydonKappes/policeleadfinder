@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy.dialects.postgresql import ENUM
 from enum import Enum as PyEnum
+from sqlalchemy.types import TypeDecorator, Enum as SQLAlchemyEnum
 
 load_dotenv()
 
@@ -14,6 +15,14 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+class EnumAsStr(TypeDecorator):
+    impl = SQLAlchemyEnum
+    
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return value.value
 
 # Enums
 class CasePriority(PyEnum):
@@ -57,8 +66,8 @@ class Case(Base):
     
     id = Column(Integer, primary_key=True)
     vehicle_id = Column(Integer, ForeignKey('vehicles.id', ondelete='CASCADE'))
-    status = Column(Enum(CaseStatus), default=CaseStatus.NEW)
-    priority = Column(Enum(CasePriority))
+    status = Column(EnumAsStr(CaseStatus), default=CaseStatus.NEW)
+    priority = Column(EnumAsStr(CasePriority))
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     notes = Column(Text, nullable=True)
