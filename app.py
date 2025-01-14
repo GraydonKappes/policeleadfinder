@@ -55,38 +55,38 @@ def analyze_with_claude(text):
         sanitized_text = ''.join(char if ord(char) < 128 else ' ' for char in text)
         
         system_prompt = """You are a specialized assistant analyzing automobile crash records.
-        Analyze the provided crash report and return ONLY the following information in this EXACT format:
+Analyze the provided crash report and return ONLY the following information in this EXACT format:
 
-        INCIDENT SUMMARY:
-        [2-3 sentence summary of the crash]
+INCIDENT SUMMARY:
+[2-3 sentence summary of the crash]
 
-        CRASH DATE: [MM/DD/YYYY format - date only, no time]
+CRASH DATE: [MM/DD/YYYY format - date only, no time]
 
-        TOWING COMPANY: [name of towing company]
+VEHICLE 1:
+Owner Name: [full name]
+Owner Address: [complete address]
+Make: [make]
+Model: [model]
+Year: [year]
+Damage: [damage details]
+Injuries: [injury status]
+Insurance Company: [insurance company name]
+Insurance Policy #: [policy number]
+Towing Company: [name of towing company]
 
-        VEHICLE 1:
-        Owner Name: [full name]
-        Owner Address: [complete address]
-        Make: [make]
-        Model: [model]
-        Year: [year]
-        Damage: [damage details]
-        Injuries: [injury status]
-        Insurance Company: [insurance company name]
-        Insurance Policy #: [policy number]
+VEHICLE 2:
+Owner Name: [full name]
+Owner Address: [complete address]
+Make: [make]
+Model: [model]
+Year: [year]
+Damage: [damage details]
+Injuries: [injury status]
+Insurance Company: [insurance company name]
+Insurance Policy #: [policy number]
+Towing Company: [name of towing company]
 
-        VEHICLE 2:
-        Owner Name: [full name]
-        Owner Address: [complete address]
-        Make: [make]
-        Model: [model]
-        Year: [year]
-        Damage: [damage details]
-        Injuries: [injury status]
-        Insurance Company: [insurance company name]
-        Insurance Policy #: [policy number]
-
-        If any information is missing, write "Not specified"."""
+If any information is missing, write "Not specified"."""
         
         message = anthropic.messages.create(
             model="claude-3-sonnet-20240229",
@@ -419,7 +419,10 @@ if uploaded_files:
                                    .replace("Model:", "<br><b>Model:</b>")
                                    .replace("Year:", "<br><b>Year:</b>")
                                    .replace("Damage:", "<br><b>Damage:</b>")
-                                   .replace("Injuries:", "<br><b>Injuries:</b>"))
+                                   .replace("Injuries:", "<br><b>Injuries:</b>")
+                                   .replace("Insurance Company:", "<br><b>Insurance Company:</b>")
+                                   .replace("Insurance Policy #:", "<br><b>Insurance Policy #:</b>")
+                                   .replace("Towing Company:", "<br><b>Towing Company:</b>"))
                     
                     st.markdown(f'<div class="vehicle-box">{formatted_v1}</div>', unsafe_allow_html=True)
                 
