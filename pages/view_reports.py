@@ -17,9 +17,9 @@ with col2:
 st.subheader("Filter by Vehicle Year")
 col1, col2 = st.columns(2)
 with col1:
-    min_year = st.number_input("Min Year", min_value=1900, max_value=datetime.now().year)
+    min_year = st.number_input("Min Year", min_value=1900, max_value=datetime.now().year, value=2015)
 with col2:
-    max_year = st.number_input("Max Year", min_value=1900, max_value=datetime.now().year, value=datetime.now().year)
+    max_year = st.number_input("Max Year", min_value=1900, max_value=datetime.now().year, value=2025)
 
 if st.button("Apply Filters"):
     db = SessionLocal()
