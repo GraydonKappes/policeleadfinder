@@ -44,7 +44,8 @@ def save_crash_report(db: Session, report_data: dict):
                 damage=vehicle_data["damage"],
                 injuries=injury_text,
                 insurance_company=vehicle_data.get("insurance_company"),
-                insurance_policy_number=vehicle_data.get("insurance_policy_number")
+                insurance_policy_number=vehicle_data.get("insurance_policy_number"),
+                towing_company=vehicle_data.get("towing_company")
             )
             db.add(vehicle)
     db.commit()
