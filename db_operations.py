@@ -105,7 +105,7 @@ def create_case_for_vehicle(db: Session, vehicle_id: int) -> Case:
         # Create new case
         case = Case(
             vehicle_id=vehicle_id,
-            status=CaseStatus.NEW,
+            status=CaseStatus.New,
             priority=priority,
             notes=f"Initial case created for {vehicle.make} {vehicle.model} ({vehicle.year})"
         )
