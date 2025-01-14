@@ -15,21 +15,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# Define valid injury statuses
-INJURY_STATUSES = [
-    'No apparent injury',
-    'Suspected minor injury',
-    'Suspected serious injury',
-    'Fatal injury',
-    'Not specified'
-]
-
-# Create PostgreSQL ENUM type
-injury_status_enum = ENUM(
-    *INJURY_STATUSES,
-    name='injury_status'
-)
-
+# Enums
 class CasePriority(PyEnum):
     LOW = "Low"
     MEDIUM = "Medium"
@@ -41,6 +27,30 @@ class CaseStatus(PyEnum):
     IN_PROGRESS = "In Progress"
     CLOSED = "Closed"
     LOST = "Lost"
+
+# Define valid injury statuses
+INJURY_STATUSES = [
+    'No apparent injury',
+    'Suspected minor injury',
+    'Suspected serious injury',
+    'Fatal injury',
+    'Not specified'
+]
+
+injury_status_enum = ENUM(*INJURY_STATUSES, name='injury_status')
+
+# Models
+class CrashReport(Base):
+    __tablename__ = "crash_reports"
+    
+    id = Column(Integer, primary_key=True)
+    filename = Column(String(255), nullable=False)
+    incident_summary = Column(Text, nullable=False)
+    crash_date = Column(Date, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    processed_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    
+    vehicles = relationship("Vehicle", back_populates="crash_report", cascade="all, delete-orphan")
 
 class Case(Base):
     __tablename__ = "cases"
@@ -54,18 +64,6 @@ class Case(Base):
     notes = Column(Text, nullable=True)
     
     vehicle = relationship("Vehicle", back_populates="case")
-
-class CrashReport(Base):
-    __tablename__ = "crash_reports"
-    
-    id = Column(Integer, primary_key=True)
-    filename = Column(String(255), nullable=False)
-    incident_summary = Column(Text, nullable=False)
-    crash_date = Column(Date, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    processed_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    
-    vehicles = relationship("Vehicle", back_populates="crash_report", cascade="all, delete-orphan")
 
 class Vehicle(Base):
     __tablename__ = "vehicles"
