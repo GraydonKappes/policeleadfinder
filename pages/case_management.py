@@ -30,23 +30,14 @@ try:
                 with col2:
                     new_status = st.selectbox(
                         "Status",
-                        options=[
-                            "NEW",
-                            "IN PROGRESS", 
-                            "CLOSED",
-                            "LOST"
-                        ],
+                        options=[status for status in CaseStatus],
                         key=f"status_{case.id}",
-                        index=[
-                            "NEW",
-                            "IN PROGRESS",
-                            "CLOSED", 
-                            "LOST"
-                        ].index(case.status.value)
+                        index=[status for status in CaseStatus].index(case.status),
+                        format_func=lambda x: x.value
                     )
                     
-                    if new_status != case.status.value:
-                        case.status = CaseStatus(new_status)
+                    if new_status != case.status:
+                        case.status = new_status
                         case.updated_at = datetime.utcnow()
                         db.commit()
                         st.rerun()
