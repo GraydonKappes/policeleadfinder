@@ -88,28 +88,33 @@ def calculate_case_priority(vehicle_damage: str, vehicle_year: int) -> CasePrior
         return CasePriority.LOW 
 
 def create_case_for_vehicle(db: Session, vehicle_id: int) -> Case:
-    # Check if case already exists
-    existing_case = db.query(Case).filter(Case.vehicle_id == vehicle_id).first()
-    if existing_case:
-        return existing_case
-    
-    # Get vehicle details
-    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
-    if not vehicle:
-        raise ValueError("Vehicle not found")
-    
-    # Calculate priority
-    priority = calculate_case_priority(vehicle.damage, vehicle.year)
-    
-    # Create new case
-    case = Case(
-        vehicle_id=vehicle_id,
-        status=CaseStatus.NEW,
-        priority=priority,
-        notes=f"Initial case created for {vehicle.make} {vehicle.model} ({vehicle.year})"
-    )
-    
-    db.add(case)
-    db.commit()
-    db.refresh(case)
-    return case 
+    try:
+        # Check if case already exists
+        existing_case = db.query(Case).filter(Case.vehicle_id == vehicle_id).first()
+        if existing_case:
+            return existing_case
+        
+        # Get vehicle details
+        vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+        if not vehicle:
+            raise ValueError("Vehicle not found")
+        
+        # Calculate priority
+        priority = calculate_case_priority(vehicle.damage, vehicle.year)
+        
+        # Create new case
+        case = Case(
+            vehicle_id=vehicle_id,
+            status=CaseStatus.NEW,
+            priority=priority,
+            notes=f"Initial case created for {vehicle.make} {vehicle.model} ({vehicle.year})"
+        )
+        
+        db.add(case)
+        db.commit()
+        db.refresh(case)
+        return case
+        
+    except Exception as e:
+        db.rollback()
+        raise e 
