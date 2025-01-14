@@ -57,6 +57,7 @@ class Vehicle(Base):
     injuries = Column(injury_status_enum, nullable=False)
     insurance_company = Column(String(255), nullable=True)
     insurance_policy_number = Column(String(100), nullable=True)
+    towing_company = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     
     crash_report = relationship("CrashReport", back_populates="vehicles")
