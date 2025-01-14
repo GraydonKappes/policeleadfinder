@@ -99,13 +99,13 @@ def create_case_for_vehicle(db: Session, vehicle_id: int) -> Case:
         if not vehicle:
             raise ValueError("Vehicle not found")
         
-        # Calculate priority
+        # Calculate priority (will return CasePriority.LOW, MEDIUM, or HIGH)
         priority = calculate_case_priority(vehicle.damage, vehicle.year)
         
-        # Create new case
+        # Create new case (CaseStatus.NEW matches the SQL enum value "NEW")
         case = Case(
             vehicle_id=vehicle_id,
-            status=CaseStatus.NEW,
+            status=CaseStatus.NEW,  # Will be stored as "NEW" in database
             priority=priority,
             notes=f"Initial case created for {vehicle.make} {vehicle.model} ({vehicle.year})"
         )

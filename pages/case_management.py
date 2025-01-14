@@ -30,9 +30,19 @@ try:
                 with col2:
                     new_status = st.selectbox(
                         "Status",
-                        options=[status.value for status in CaseStatus],
+                        options=[
+                            "NEW",
+                            "IN PROGRESS", 
+                            "CLOSED",
+                            "LOST"
+                        ],
                         key=f"status_{case.id}",
-                        index=[status.value for status in CaseStatus].index(case.status.value)
+                        index=[
+                            "NEW",
+                            "IN PROGRESS",
+                            "CLOSED", 
+                            "LOST"
+                        ].index(case.status.value)
                     )
                     
                     if new_status != case.status.value:

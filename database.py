@@ -26,16 +26,16 @@ class EnumAsStr(TypeDecorator):
 
 # Enums
 class CasePriority(PyEnum):
-    LOW = "Low"
-    MEDIUM = "Medium"
-    HIGH = "High"
-    URGENT = "Urgent"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    URGENT = "URGENT"
 
 class CaseStatus(PyEnum):
-    NEW = "New"
-    IN_PROGRESS = "In Progress"
-    CLOSED = "Closed"
-    LOST = "Lost"
+    NEW = "NEW"
+    IN_PROGRESS = "IN PROGRESS"
+    CLOSED = "CLOSED"
+    LOST = "LOST"
 
 # Define valid injury statuses
 INJURY_STATUSES = [
