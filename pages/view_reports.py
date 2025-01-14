@@ -2,6 +2,7 @@ import streamlit as st
 from database import SessionLocal
 from db_operations import get_filtered_crashes
 from datetime import datetime, date
+from app import reset_session_state
 
 st.title("View Crash Reports")
 
@@ -22,6 +23,7 @@ with col2:
     max_year = st.number_input("Max Year", min_value=1900, max_value=datetime.now().year, value=2025)
 
 if st.button("Apply Filters"):
+    reset_session_state()
     db = SessionLocal()
     try:
         crashes = get_filtered_crashes(

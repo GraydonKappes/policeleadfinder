@@ -296,6 +296,15 @@ def format_analysis_for_json(analysis_list):
     
     return formatted_data
 
+def reset_session_state():
+    """Reset all session state variables"""
+    for key in st.session_state.keys():
+        del st.session_state[key]
+
+# Reset session state when uploading new files
+if 'previous_files' not in st.session_state:
+    st.session_state.previous_files = None
+
 # Streamlit UI
 st.title("PDF Analysis with Claude AI")
 st.write("Upload a PDF file to get an AI-powered analysis")
