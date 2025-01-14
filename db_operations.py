@@ -65,4 +65,7 @@ def get_filtered_crashes(db: Session, year_range=None, date_range=None):
             CrashReport.crash_date.between(start_date, end_date)
         )
     
+    # Add ordering by crash_date in descending order
+    query = query.order_by(CrashReport.crash_date.desc())
+    
     return query.all() 
